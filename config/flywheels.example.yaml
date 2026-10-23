@@ -1,0 +1,44 @@
+# flywheels.yaml —— 飞轮自检器配置示例（复制后按自己产线填）
+#
+# 判级口径：green=活着且有增量 / idle=在跑但零增量 / dead=停转 / observe=软信号
+# 键名=实例名（随意取）；同类型检查器配多实例时用 kind 指定检查器类型。
+# 全部阈值在这里，代码零业务数字。
+
+checks:
+  my_pipeline:                       # 例：任何定时跑的采集/拆解/同步流水线
+    kind: state_freshness
+    state: "runtime/state/pipeline_state.json"
+    stale_hours: 26
+
+  my_increment:                      # 增量判定：rc=0 但产物零增=空转
+    kind: json_metric
+    state: "runtime/state/pipeline_state.json"
+    metric_path: "results.total_items"
+    stale_hours: 26
+    baseline_file: "runtime/state/.flywheel_baseline.json"   # 独立基线，禁指回 state 本身
+    baseline_key: "total_items"
+
+  my_db:                             # SQLite WAL 库：主文件 mtime 会滞后
+    kind: state_freshness
+    state: "runtime/data/ledger.db"
+    wal: true
+    stale_hours: 2
+
+  my_supervisor:                     # 守护名册：{children: {x: {alive: true}}}
+    kind: roster_health
+    state: "runtime/state/roster.json"
+    stale_hours: 1
+
+  my_queue:                          # 待办积压
+    kind: queue_backlog
+    queue_dir: "work/queue"
+    backlog_warn: 10
+
+  my_ledger:                         # 经验档案软信号
+    kind: ledger_soft
+    ledger: "docs/cases_ledger.md"
+    soft_days: 30
+
+report:
+  out_dir: "work/flywheel_checks"
+  keep_last: 30

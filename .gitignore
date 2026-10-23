@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+work/
+runtime/
+out/
+check_*.md
+.flywheel_baseline.json
