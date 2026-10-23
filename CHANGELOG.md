@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0 — 2026-10-23
+
+M1：五件套收官。件套②~⑤落地，自测扩到 33 项。
+
+- core.ledger：AppendLedger（JSONL 只增台账，ts/schema_version 自动盖）+ guard_overwrite 覆盖保护三策略（refuse/sidecar/backup）——覆盖在库里没有静默语法
+- core.gate：坑→门禁运行器（规则=正则+glob 作用域+block/warn，message 强制回溯判例）
+- core.triage：变更分级（config 放行/script 提示降级/stable 拦截；contract_files 一票否决；先中先用——严格层必须排前面，示例配置已体现）
+- tools/：ledger / pit_gate / triage / decision 四个 CLI；decision 自动编号 D-YYYYMMDD-nn
+- 判例+2：03 自反馈飞轮吃掉自己的账（静默劣化）/ 04 字符集外一个对勾部署即炸（坑→门禁首例实证）
+- 自测 33/33；triage 与 pit_gate CLI 各自实测（triage 对本仓 core/engine.py 正确判 block）
+
 ## 0.1.0 — 2026-10-23
 
 M0：件套①「飞轮自检器」通用化落地。

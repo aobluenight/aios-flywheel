@@ -1,0 +1,24 @@
+# gates.yaml —— 坑→门禁规则示例
+#
+# 纪律：每条规则必须回溯到真实事故（message 里带判例指针）；
+#       没有事故背书的规则禁入——只会训练人绕过门禁。
+# severity: block=命中即拦（退出码1） / warn=提示不拦
+
+rules:
+  - name: gbk_unsafe_glyphs
+    pattern: "[\u2713\u2717\u2194\u25b6]"
+    scope: ["**/*.lua"]
+    severity: block
+    message: "判例#288 族：对勾/叉/双向箭头等在 GBK 字表外，部署即炸（先例=游戏 mod 部署器拦截器）"
+
+  - name: rm_rf_root
+    pattern: "rm\\s+-rf\\s+(/[A-Za-z]|~|\\$HOME)"
+    scope: ["**/*.sh", "**/*.py", "**/*.bat", "**/*.ps1"]
+    severity: block
+    message: "递归删除指向根/家目录：破坏半径无界，必须换成回收站/待删除区流程"
+
+  - name: todo_no_owner
+    pattern: "TODO(?!\\s*[@(（])"
+    scope: ["**/*.py"]
+    severity: warn
+    message: "TODO 无认领人——欠账不可追溯（示例规则，按需删改）"

@@ -18,6 +18,10 @@ sys.path.insert(0, str(ROOT))
 
 from core.engine import Engine, LEVEL_GREEN, LEVEL_IDLE, LEVEL_DEAD, LEVEL_OBSERVE  # noqa: E402
 from ext.checkers import ALL  # noqa: E402
+from core.ledger import AppendLedger, guard_overwrite, POLICY_REFUSE, POLICY_SIDECAR, POLICY_BACKUP  # noqa: E402
+from core.gate import load_rules, run_gate, scan_tree  # noqa: E402
+from core.triage import classify, LEVEL_PASS, LEVEL_NOTICE, LEVEL_BLOCK  # noqa: E402
+from tools.decision import next_id  # noqa: E402
 
 PASS = 0
 FAIL = 0
@@ -126,9 +130,87 @@ def main() -> int:
         # 未注册检查器配置会被 from_config 拦；直接构造时多余键被忽略=容忍未知 spec 字段的另一面
         check("forward-compat: unknown spec keys tolerated (no crash)", isinstance(br, dict), True)
 
-        print("[4] 报告输出")
-        rep = engine.write_report(root / "out", r, title="selftest")
-        check("report written", rep.is_file(), True)
+    print("[4] 报告输出")
+    rep = engine.write_report(root / "out", r, title="selftest")
+    check("report written", rep.is_file(), True)
+
+    # ========== 件套② 增量台账+覆盖保护 ==========
+    print("[5] ledger：只增台账 / 覆盖保护三策略")
+    led2 = root / "runtime/ledger.jsonl"
+    lg = AppendLedger(led2)
+    lg.append({"kind": "pit", "text": "a"})
+    lg.append({"kind": "pit", "text": "b"})
+    check("append x2 -> count 2", lg.count(), 2)
+    check("history immutable (first entry intact)", lg.entries()[0]["text"], "a")
+    check("auto ts+schema", "ts" in lg.entries()[0] and "schema_version" in lg.entries()[0], True)
+    try:
+        lg.append({"ts": "hack"})
+        check("reserved field rejected", "no raise", "raise")
+    except ValueError:
+        check("reserved field rejected", "raise", "raise")
+
+    f = root / "plain.txt"
+    f.write_text("v1", encoding="utf-8")
+    try:
+        guard_overwrite(f, "v2", POLICY_REFUSE)
+        check("refuse raises", "no raise", "raise")
+    except FileExistsError:
+        check("refuse raises", "raise", "raise")
+    side = guard_overwrite(f, "v2", POLICY_SIDECAR)
+    check("sidecar leaves original", f.read_text(encoding="utf-8"), "v1")
+    check("sidecar wrote sibling", side.is_file() and side != f, True)
+    out = guard_overwrite(f, "v3", POLICY_BACKUP)
+    check("backup wrote new content", out.read_text(encoding="utf-8"), "v3")
+    check("backup kept .bak", any(p.name.endswith(".bak") for p in f.parent.iterdir()), True)
+
+    # ========== 件套③ 坑→门禁 ==========
+    print("[6] gate：规则命中拦截 / 作用域生效 / 判例回溯")
+    gtree = root / "gateproj"
+    gtree.mkdir(parents=True, exist_ok=True)
+    (gtree / "mod.lua").write_text('say("done ✓")', encoding="utf-8")
+    (gtree / "clean.lua").write_text('say("done!")', encoding="utf-8")
+    (gtree / "notes.txt").write_text("✓ in txt is fine", encoding="utf-8")
+    rules_cfg = {"rules": [
+        {"name": "gbk_unsafe_glyphs", "pattern": "[\u2713\u2717\u2194\u25b6]",
+         "scope": ["**/*.lua"], "severity": "block", "message": "case#04"},
+        {"name": "todo_no_owner", "pattern": "TODO",
+         "scope": ["**/*.py"], "severity": "warn", "message": "unowned todo"},
+    ]}
+    rules = load_rules(rules_cfg)
+    greport = scan_tree(rules, gtree)
+    blocked_files = {f for f, _, _ in greport.blocked}
+    check("glyph in .lua -> blocked", "mod.lua" in blocked_files, True)
+    check("txt out of scope -> untouched", "notes.txt" in blocked_files, False)
+    check("clean lua passes", "clean.lua" in blocked_files, False)
+    check("block -> not ok", greport.ok, False)
+    greport2 = run_gate(load_rules(rules_cfg), [gtree / "clean.lua"], gtree)
+    check("clean file -> ok", greport2.ok, True)
+
+    # ========== 件套④ 变更分级 ==========
+    print("[7] triage：config 放行 / script 提示 / stable 拦截 / 契约一票否决")
+    tri_cfg = {
+        "layers": [  # 先中先用：严格层排前面，防宽 glob 抢跑
+            {"name": "stable", "level": "block", "patterns": ["core/**"]},
+            {"name": "config", "level": "pass", "patterns": ["config/**", "**/*.yaml"]},
+            {"name": "script", "level": "notice", "patterns": ["ext/**", "tools/**", "**/*.py"]},
+        ],
+        "contract_files": ["docs/contract_api.md"],
+        "default_layer": "script",
+    }
+    t = classify(["config/thresholds.yaml"], tri_cfg, root=root)
+    check("config -> pass", t.level, LEVEL_PASS)
+    t = classify(["ext/new_checker.py"], tri_cfg, root=root)
+    check("script -> notice", t.level, LEVEL_NOTICE)
+    t = classify(["core/engine.py"], tri_cfg, root=root)
+    check("core -> block", t.level, LEVEL_BLOCK)
+    t = classify(["docs/contract_api.md"], tri_cfg, root=root)
+    check("contract -> block (override)", t.level, LEVEL_BLOCK)
+
+    # ========== 件套⑤ 拍板台账 ==========
+    print("[8] decision：id 递增 / 台账可回溯")
+    ents = [{"id": "D-20261023-01"}, {"id": "D-20261023-02"}]
+    check("next_id increments", next_id(ents), "D-20261023-03")
+    check("next_id resets by date", next_id([{"id": "D-20261022-01"}]), "D-20261023-01")
 
     print(f"\nPASS {PASS}/{PASS + FAIL}")
     return 0 if FAIL == 0 else 1

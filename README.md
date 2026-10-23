@@ -47,13 +47,13 @@ python tools/self_test.py
 python -m core.engine --config config/flywheels.yaml
 ```
 
-### 路线图（五件套）
+### 路线图（五件套 · 全部落地 v0.2.0）
 
-- [x] ① 飞轮自检器 —— 自我评估（RSI 核心件 ②）
-- [ ] ② 增量台账 + 覆盖保护 —— 防静默劣化（附事故判例）
-- [ ] ③ 坑 → 门禁生成器 —— 经验沉淀成自动预检规则（RSI 核心件 ③）
-- [ ] ④ 变更分级闸门 —— config / 脚本 / 稳定层三级预警
-- [ ] ⑤ 拍板台账模板 —— 人在环 reward model + 安全闸的落地形态
+- [x] ① 飞轮自检器 —— 自我评估（RSI 核心件 ②）：`python -m core.engine --config config/flywheels.example.yaml`
+- [x] ② 增量台账 + 覆盖保护 —— 防静默劣化：`python tools/ledger.py append ledger.jsonl --kind pit --text "..."`；`write --policy refuse|sidecar|backup`（覆盖必须显式留痕）
+- [x] ③ 坑 → 门禁生成器 —— 经验沉淀成自动预检（RSI 核心件 ③）：`python tools/pit_gate.py --rules config/gates.example.yaml --scan <dir>`（规则必须回溯真实判例，禁凭空发明）
+- [x] ④ 变更分级闸门 —— config 放行 / script 提示降级 / stable 拦截：`python tools/triage.py --rules config/triage.example.yaml --git`（block 退出码 2）
+- [x] ⑤ 拍板台账 —— 人在环 reward model + 安全闸：`python tools/decision.py add --decision "..." --why "..." --scope "..."`（模板见 docs/templates/）
 
 ## 架构约定
 

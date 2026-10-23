@@ -1,0 +1,19 @@
+# triage.yaml —— 变更分级闸门示例
+#
+# 语义：pass=配置层直接放行 / notice=脚本层提示降级 / block=稳定层须人工确认+影响评估
+# ⚠ 先中先用：严格层（block）排最前，防 "**/*.py" 这类宽 glob 把稳定层抢跑成 notice。
+# contract_files 一票否决，优先于一切层。
+
+layers:
+  - name: stable                       # 稳定层：冻结期内禁改
+    level: block
+    patterns: ["core/**", "engine/**", "**/contract*", "**/*_spec.md"]
+  - name: config                       # 配置层：直接放行
+    level: pass
+    patterns: ["config/**", "**/*.yaml", "**/*.yml", "**/*.json", "**/*.ini", "**/*.toml"]
+  - name: script                       # 脚本层：提示考虑降级为配置
+    level: notice
+    patterns: ["ext/**", "tools/**", "scripts/**", "plugins/**", "**/*.py", "**/*.js", "**/*.lua"]
+
+contract_files: []          # 显式契约清单（如 api.md、schema 文件），命中直接 block
+default_layer: script
