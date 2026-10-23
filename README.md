@@ -1,7 +1,10 @@
 # aios-flywheel · Human-in-the-Loop System-level RSI Toolkit
 
+![License](https://img.shields.io/badge/license-MIT-green) ![Python](https://img.shields.io/badge/python-3.9%2B-blue) ![self-test](https://img.shields.io/badge/self--test-33%2F33-brightgreen) ![platform](https://img.shields.io/badge/platform-windows%20%7C%20linux%20%7C%20macos-lightgrey)
+
 > 单机、人在环、系统层的自进化（Recursive Self-Improvement）工具集。
-> 从一个真实运行的单人 AI OS 产线（30+ 产线 / 275+ 在役脚本）中提炼而来，全部为生产实证件。
+> 从一个真实运行的单人 AI OS 产线（30+ 产线 / 275+ 在役脚本）中提炼而来，全部为生产实证件——
+> 每个检查器背后都是一次真实事故。这不是"又一个监控脚本"，是一套**从事故里长出来的纪律**。
 
 ## 它回答什么问题
 
@@ -69,6 +72,28 @@ ext/    动态层：内置检查器实现。新增检查器 = 在这里加一个
 ## 判例库
 
 见 [`docs/cases/`](docs/cases/) —— 每个检查器背后都是一次真实事故的脱敏复盘。这是本仓库和"又一个监控脚本"的区别。
+
+## 为什么开源，怎么一起进化
+
+这个工具集诞生于"AI 替人持续干活"的一线：自动化静默死亡、空转、监控器污染监控对象、
+经验教训靠人肉记不住——每一个坑都先变成判例，再变成代码。我们把它开源，是因为这套问题
+**所有跑 Agent 自动化的人都会撞上**，而答案应该被复用，不该每家重踩一遍。
+
+开源（Open Source）的含义很简单：代码公开 + MIT 协议授权——任何人可以**自由使用、修改、
+再分发**，包括用在商业产品里，唯一义务是保留版权声明。进化则是社区协作的四种动作：
+
+- **Star** —— 收藏关注，告诉作者有人用；
+- **Issue** —— 撞到了新坑、想要新检查器？提出来，坑就是需求；
+- **Fork** —— 整仓抄走，按自己的产线改造（检查器全是 YAML 配置，改起来不用读引擎）；
+- **Pull Request** —— 改好了交回来，合并进主线，所有人受益。
+
+欢迎的第一类贡献恰恰是**判例**：你的自动化吃过什么亏，沉淀成了什么检查逻辑——
+按 [CONTRIBUTING.md](CONTRIBUTING.md) 的「判例→规则」路径提交。
+
+## 参与贡献
+
+见 [CONTRIBUTING.md](CONTRIBUTING.md)。核心纪律一条：**门禁规则必须回溯真实事故**，
+没有事故背书的规则会被拒——这是本仓库的立仓之本。
 
 ## License
 
